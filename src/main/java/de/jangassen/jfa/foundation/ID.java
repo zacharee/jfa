@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 // This file has been modified
 package de.jangassen.jfa.foundation;
 
@@ -10,7 +10,7 @@ import com.sun.jna.Pointer;
  * <p>
  * User: spLeaner
  */
-public class ID extends NativeLong {
+public final class ID extends NativeLong {
 
   public static final ID NIL = new ID(0L);
 
