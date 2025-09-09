@@ -71,6 +71,10 @@ public interface FoundationLibrary extends Library {
 
   long CFStringConvertEncodingToNSStringEncoding(long cfEncoding);
 
+  long CFArrayGetCount(ID theArray);
+
+  ID CFArrayGetValueAtIndex(ID theArray, long index);
+
   void CFRetain(ID cfTypeRef);
 
   void CFRelease(ID cfTypeRef);

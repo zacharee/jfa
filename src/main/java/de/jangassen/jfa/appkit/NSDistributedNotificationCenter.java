@@ -10,10 +10,13 @@ public interface NSDistributedNotificationCenter extends NSObject {
     return ObjcToJava.invokeStatic(NSDistributedNotificationCenter.class, "defaultCenter");
   }
 
+  void addObserver(ID observer, @NamedArg("selector") Pointer aSelector, @NamedArg("name") String aName, @NamedArg("object") NSString anObject);
   void addObserver(ID observer, @NamedArg("selector") Pointer aSelector, @NamedArg("name") NSNotificationName aName, @NamedArg("object") NSString anObject);
 
+  void removeObserver(ID observer, @NamedArg("name") String aName, @NamedArg("object") NSString anObject);
   void removeObserver(ID observer, @NamedArg("name") NSNotificationName aName, @NamedArg("object") NSString anObject);
 
+  void postNotificationName(String name, @NamedArg("object") NSString object, @NamedArg("userInfo") NSDictionary<?, ?> userInfo, @NamedArg("deliverImmediately") boolean deliverImmediately);
   void postNotificationName(NSNotificationName name, @NamedArg("object") NSString object, @NamedArg("userInfo") NSDictionary<?, ?> userInfo, @NamedArg("deliverImmediately") boolean deliverImmediately);
 
   enum NSNotificationName {

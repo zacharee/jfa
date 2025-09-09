@@ -113,6 +113,13 @@ public final class JavaToObjc {
             return invoke(self, method, new ID[]{arg});
           }
         };
+      case 3:
+        return new Callback() {
+          @SuppressWarnings("unused")
+          public ID callback(ID self, ID cmd, ID arg0, ID arg1, ID arg2) throws InvocationTargetException, IllegalAccessException {
+            return invoke(self, method, new ID[]{arg0, arg1, arg2});
+          }
+        };
       default:
         throw new IllegalArgumentException("Method with " + method.getParameterCount() + " parameters not supported.");
     }

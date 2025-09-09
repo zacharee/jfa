@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 // This file has been modified
 package de.jangassen.jfa.foundation;
 
@@ -7,8 +7,10 @@ import com.sun.jna.ptr.PointerByReference;
 
 import java.io.File;
 import java.lang.reflect.Proxy;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author spleaner
@@ -105,6 +107,14 @@ public final class Foundation {
 
   public static ID invoke(final ID id, final String selector, Object... args) {
     return invoke(id, createSelector(selector), args);
+  }
+
+  public static double invoke_fpret(ID receiver, Pointer selector, Object... args) {
+    return myObjcMsgSend.invokeDouble(prepInvoke(receiver, selector, args));
+  }
+
+  public static double invoke_fpret(ID receiver, String selector, Object... args) {
+    return invoke_fpret(receiver, createSelector(selector), args);
   }
 
   public static boolean isNil(ID id) {
@@ -213,6 +223,10 @@ public final class Foundation {
     return s == null ? ID.NIL : NSString.create(s);
   }
 
+  public static ID nsString(CharSequence s) {
+    return s == null ? ID.NIL : NSString.create(s);
+  }
+
   public static ID nsUUID(UUID uuid) {
     return nsUUID(uuid.toString());
   }
@@ -234,7 +248,7 @@ public final class Foundation {
   }
 
   public static String getNSErrorText(ID error) {
-    if (error == null || error.byteValue() == 0) return null;
+    if (error == null || error.intValue() == 0) return null;
 
     String description = toStringViaUTF8(invoke(error, "localizedDescription"));
     String recovery = toStringViaUTF8(invoke(error, "localizedRecoverySuggestion"));
@@ -264,6 +278,13 @@ public final class Foundation {
 
   private static long convertCFEncodingToNS(long cfEncoding) {
     return myFoundationLibrary.CFStringConvertEncodingToNSStringEncoding(cfEncoding) & 0xffffffffffL;  // trim to C-type limits
+  }
+
+  public static void foreachCFArray(ID theArray, Consumer<ID> callback) {
+    long count = myFoundationLibrary.CFArrayGetCount(theArray);
+    for (long i = 0; i < count; i++) {
+      callback.accept(myFoundationLibrary.CFArrayGetValueAtIndex(theArray, i));
+    }
   }
 
   public static void cfRetain(ID id) {
@@ -411,13 +432,29 @@ public final class Foundation {
       }
 
       byte[] utf16Bytes = s.getBytes(StandardCharsets.UTF_16LE);
-      return invoke(invoke(invoke(nsStringCls, allocSel),
-              initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
-              autoreleaseSel);
+      return create(utf16Bytes);
+    }
+
+    public static ID create(CharSequence cs) {
+      if (cs instanceof String s) {
+        return create(s);
+      }
+      if (cs.isEmpty()) {
+        return invoke(nsStringCls, stringSel);
+      }
+
+      byte[] utf16Bytes = StandardCharsets.UTF_16LE.encode(CharBuffer.wrap(cs)).array();
+      return create(utf16Bytes);
+    }
+
+    private static ID create(byte[] utf16Bytes) {
+      ID emptyNsString = invoke(nsStringCls, allocSel);
+      ID initializedNsString = invoke(emptyNsString, initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE);
+      return invoke(initializedNsString, autoreleaseSel);
     }
   }
 
-  static class RunnableInfo {
+  static final class RunnableInfo {
     Runnable myRunnable;
     boolean myUseAutoreleasePool;
     RunnableInfo(Runnable runnable, boolean useAutoreleasePool) {
@@ -426,7 +463,7 @@ public final class Foundation {
     }
   }
 
-  public static class NSDictionary {
+  public final static class NSDictionary {
     private final ID myDelegate;
 
     public NSDictionary(ID delegate) {
@@ -476,7 +513,7 @@ public final class Foundation {
     }
   }
 
-  public static class NSArray {
+  public static final class NSArray {
     private final ID myDelegate;
 
     public NSArray(ID delegate) {
@@ -501,7 +538,7 @@ public final class Foundation {
     }
   }
 
-  public static class NSAutoreleasePool {
+  public static final class NSAutoreleasePool {
     private final ID myDelegate;
 
     public NSAutoreleasePool() {

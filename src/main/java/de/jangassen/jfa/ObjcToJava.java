@@ -37,12 +37,16 @@ public class ObjcToJava implements InvocationHandler {
   }
 
   public static <T extends NSObject> T invokeStatic(Class<T> clazz, String selector, Object... args) {
-    if (clazz.isAnnotationPresent(Protocol.class)) {
+    return invokeStatic(clazz, clazz, selector, args);
+  }
+
+  public static <T extends NSObject> T invokeStatic(Class<?> instanceClass, Class<T> returnClass, String selector, Object... args) {
+    if (instanceClass.isAnnotationPresent(Protocol.class)) {
       throw new IllegalArgumentException("Cannot allocate protocols.");
     }
 
-    ID instance = Foundation.invoke(getObjcClass(clazz.getSimpleName()), selector, args);
-    return map(instance, clazz);
+    ID instance = Foundation.invoke(getObjcClass(instanceClass.getSimpleName()), selector, args);
+    return map(instance, returnClass);
   }
 
   @SuppressWarnings("unchecked")
